@@ -1,5 +1,9 @@
 import random
+import time
 
+import gevent
+import gevent.monkey
+gevent.monkey.patch_all()
 from gevent.pool import Pool
 from lxml import etree
 import requests
@@ -62,6 +66,7 @@ def _queue(username):
 
 def get(username):
     """ Return a list of who this person follows"""
+    print username
     text = _fetch(username)
     friends = _get_friends(text)
     score = _get_score(text)
@@ -73,12 +78,11 @@ def get(username):
             _queue(friend)
         _store(user_id, record, index + 1)
 
-JOBS = []
 if __name__ == "__main__":
     count = 0
     while len(SEEDS):
         seed = SEEDS.pop()
-        print str(count) + " " + seed
         count += 1
-        JOBS.append(POOL.spawn(get, seed))
-        [x.get() for x in JOBS]
+        POOL.spawn(get, seed)
+        if not POOL.full():
+            POOL.join()
