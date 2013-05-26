@@ -45,13 +45,15 @@ def _get_score(text):
     return int(parts[1])
 
 
-def _store(username, friend, index):
-    db.add(username, friend, index)
+def _store(user_id, friend_id, index):
+    db.add(user_id, friend_id, index)
 
 
 def _already_indexed(username):
     first = db.exists(username)
-    return first
+    if first:
+        return first.id
+    return None
 
 
 def _queue(username):
@@ -63,16 +65,20 @@ def get(username):
     text = _fetch(username)
     friends = _get_friends(text)
     score = _get_score(text)
+    user_id = db.create_user(username, score)
     for index, friend in enumerate(friends):
-        _store(username, friend, index + 1)
-        if not _already_indexed(friend):
+        record = _already_indexed(friend)
+        if not record:
+            record = db.create_user(friend)
             _queue(friend)
+        _store(user_id, record, index + 1)
 
+JOBS = []
 if __name__ == "__main__":
     count = 0
     while len(SEEDS):
         seed = SEEDS.pop()
-        print seed
-        print count
+        print str(count) + " " + seed
         count += 1
-        POOL.spawn(get, seed)
+        JOBS.append(POOL.spawn(get, seed))
+        [x.get() for x in JOBS]

@@ -2,3 +2,4 @@ lxml
 sqlalchemy
 requests
 nose
+gevent
