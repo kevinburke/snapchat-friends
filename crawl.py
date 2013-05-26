@@ -1,7 +1,10 @@
 import random
 
+from gevent.pool import Pool
 from lxml import etree
 import requests
+
+import db
 
 BASE_URL = 'http://www.snapchat.com'
 USER_AGENTS = [
@@ -11,6 +14,7 @@ USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 6.1; rv:11.0) Gecko/20100101 Firefox/11.0',
 ]
 SEEDS = open('seeds').read().splitlines()
+POOL = Pool(10)
 
 
 def _fetch(username):
@@ -22,7 +26,7 @@ def _fetch(username):
     return r.text
 
 
-def _parse(text):
+def _get_friends(text):
     """ this is not the most robust function in the world """
     def _find_friends(child):
         link = child.find('.//a')
@@ -33,28 +37,42 @@ def _parse(text):
     return [_find_friends(child) for child in friends_div.iterchildren()]
 
 
-def _store(username, index):
-    print username
-    print index
+def _get_score(text):
+    html = etree.HTML(text)
+    score_div = html.find('.//div[@id="score"]')
+    # format is HISCORE&nbsp;3428
+    parts = score_div.text.split(u'\xa0')
+    return int(parts[1])
+
+
+def _store(username, friend, index):
+    db.add(username, friend, index)
 
 
 def _already_indexed(username):
-    return True
+    first = db.exists(username)
+    return first
 
 
 def _queue(username):
-    pass
+    SEEDS.append(username)
 
 
 def get(username):
     """ Return a list of who this person follows"""
     text = _fetch(username)
-    friends = _parse(text)
+    friends = _get_friends(text)
+    score = _get_score(text)
     for index, friend in enumerate(friends):
-        _store(friend, index)
+        _store(username, friend, index + 1)
         if not _already_indexed(friend):
             _queue(friend)
 
 if __name__ == "__main__":
-    for seed in SEEDS:
-        get(seed)
+    count = 0
+    while len(SEEDS):
+        seed = SEEDS.pop()
+        print seed
+        print count
+        count += 1
+        POOL.spawn(get, seed)
