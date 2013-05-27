@@ -22,8 +22,9 @@ STOP = False
 
 def worker():
     while not STOP:
+        session = db.get_session()
         username = QUEUE.get()
-        get(username)
+        get(username, session)
         QUEUE.task_done()
 
 
@@ -70,40 +71,38 @@ def _get_score(text):
 
 
 
-def _store(user_id, friend_id, index):
-    db.add(user_id, friend_id, index)
+def _store(session, *args):
+    db.add(session, *args)
 
 
-def _already_indexed(username):
-    first = db.exists(username)
+def _already_indexed(session, username):
+    first = db.exists(session, username)
     if first:
         return first.id
     return None
 
 
 def _queue(username):
-    if username == "turtleshelley":
-        print username
     QUEUE.put(username)
 
 
-def get(username):
+def get(username, session):
     """ Return a list of who this person follows"""
     print username
     text = _fetch(username)
     friends = _get_friends(text)
     score = _get_score(text)
-    user_id = db.create_user(username, score)
+    user_id = db.create_user(session, username, score)
     for index, friend in enumerate(friends):
-        record = _already_indexed(friend)
+        record = _already_indexed(session, friend)
         if not record:
-            record = db.create_user(friend)
+            record = db.create_user(session, friend)
             _queue(friend)
         _store(user_id, record, index + 1)
 
 
-def _add_seeds():
-    users = db.find_queued_users()
+def _add_seeds(session):
+    users = db.find_queued_users(session)
     for user in users:
         QUEUE.put(user.username)
 
@@ -115,7 +114,8 @@ if __name__ == "__main__":
         count += 1
         QUEUE.put(seed)
 
-    _add_seeds()
+    session = db.get_session()
+    _add_seeds(session)
 
     for i in range(10):
         t = Thread(target=worker)
