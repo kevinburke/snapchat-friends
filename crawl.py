@@ -1,12 +1,10 @@
 import random
 import time
+from Queue import Queue
+from threading import Thread
 
-import gevent
-import gevent.monkey
-gevent.monkey.patch_all(httplib=True)
-from gevent.pool import Pool
 from lxml import etree
-import grequests
+import requests
 
 import db
 
@@ -18,19 +16,22 @@ USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 6.1; rv:11.0) Gecko/20100101 Firefox/11.0',
 ]
 SEEDS = open('seeds').read().splitlines()
-POOL = Pool(10)
+QUEUE = Queue()
+STOP = False
 
+def worker():
+    while not STOP:
+        username = QUEUE.get()
+        get(username)
+        QUEUE.task_done()
 
-def _callback(r):
-    print dir(r)
-    _parse_text(r.text)
 
 def _fetch(username):
     headers = {
         'User-Agent': random.choice(USER_AGENTS)
     }
-    return grequests.get("{}/{}".format(BASE_URL, username), headers=headers,
-                         callback=_callback)
+    resp = requests.get("{}/{}".format(BASE_URL, username), headers=headers)
+    return resp.text
 
 
 def _get_friends(text):
@@ -39,9 +40,14 @@ def _get_friends(text):
         link = child.find('.//a')
         return link.text
 
-    html = etree.HTML(text)
-    friends_div = html.find('.//div[@id="panel3"]')
-    return [_find_friends(child) for child in friends_div.iterchildren()]
+    try:
+        html = etree.HTML(text)
+        friends_div = html.find('.//div[@id="panel3"]')
+        return [_find_friends(child) for child in friends_div.iterchildren()]
+    except:
+        with open('parse.err', 'w') as f:
+            f.write(text)
+        return []
 
 
 def _get_score(text):
@@ -64,11 +70,13 @@ def _already_indexed(username):
 
 
 def _queue(username):
-    SEEDS.append(username)
+    QUEUE.put(username)
 
 
-def _parse_text(text):
-    print text
+def get(username):
+    """ Return a list of who this person follows"""
+    print username
+    text = _fetch(username)
     friends = _get_friends(text)
     score = _get_score(text)
     user_id = db.create_user(username, score)
@@ -79,18 +87,21 @@ def _parse_text(text):
             _queue(friend)
         _store(user_id, record, index + 1)
 
-
-def get(username):
-    """ Return a list of who this person follows"""
-    print username
-    r = _fetch(username)
-    grequests.map([r])
-
 if __name__ == "__main__":
     count = 0
     while len(SEEDS):
-        POOL.wait_available()
         seed = SEEDS.pop()
         count += 1
-        POOL.spawn(get, seed)
-        POOL.join()
+        QUEUE.put(seed)
+
+    for i in range(10):
+        t = Thread(target=worker)
+        t.daemon = True
+        t.start()
+
+    try:
+        time.sleep(200)
+    except KeyboardInterrupt:
+        print "interrupted"
+        STOP = True
+
