@@ -3,10 +3,10 @@ import time
 
 import gevent
 import gevent.monkey
-gevent.monkey.patch_all()
+gevent.monkey.patch_all(httplib=True)
 from gevent.pool import Pool
 from lxml import etree
-import requests
+import grequests
 
 import db
 
@@ -21,13 +21,16 @@ SEEDS = open('seeds').read().splitlines()
 POOL = Pool(10)
 
 
+def _callback(r):
+    print dir(r)
+    _parse_text(r.text)
+
 def _fetch(username):
     headers = {
         'User-Agent': random.choice(USER_AGENTS)
     }
-    r = requests.get("{}/{}".format(BASE_URL, username), headers=headers)
-    r.raise_for_status()
-    return r.text
+    return grequests.get("{}/{}".format(BASE_URL, username), headers=headers,
+                         callback=_callback)
 
 
 def _get_friends(text):
@@ -64,10 +67,8 @@ def _queue(username):
     SEEDS.append(username)
 
 
-def get(username):
-    """ Return a list of who this person follows"""
-    print username
-    text = _fetch(username)
+def _parse_text(text):
+    print text
     friends = _get_friends(text)
     score = _get_score(text)
     user_id = db.create_user(username, score)
@@ -78,11 +79,18 @@ def get(username):
             _queue(friend)
         _store(user_id, record, index + 1)
 
+
+def get(username):
+    """ Return a list of who this person follows"""
+    print username
+    r = _fetch(username)
+    grequests.map([r])
+
 if __name__ == "__main__":
     count = 0
     while len(SEEDS):
+        POOL.wait_available()
         seed = SEEDS.pop()
         count += 1
         POOL.spawn(get, seed)
-        if not POOL.full():
-            POOL.join()
+        POOL.join()
