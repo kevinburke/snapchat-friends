@@ -12,8 +12,8 @@ ENGINE = create_engine('sqlite:///{}/snapchat.db'.format(_get_filename_dir()))
 
 Session = sessionmaker(bind=ENGINE)
 
-def get_session():
-    return Session()
+def get_session(session=Session):
+    return session()
 
 
 def create_user(session, name, score=-1):
@@ -24,7 +24,7 @@ def create_user(session, name, score=-1):
         user = User(username=name, score=score)
         session.add(user)
     session.commit()
-    return user.id
+    return user
 
 def add(session, user_id, friend_id, index):
     friend = Friend(user=user_id, friend=friend_id, index=index)
@@ -34,6 +34,12 @@ def add(session, user_id, friend_id, index):
 
 def find_queued_users(session):
     return session.query(User).filter_by(score=-1).with_entities(User.username)
+
+
+def get_count(session=None):
+    if not session:
+        session = Session()
+    return session.query(User).count()
 
 
 def exists(session, username):

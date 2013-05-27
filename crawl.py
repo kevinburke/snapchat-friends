@@ -20,14 +20,6 @@ SEEDS = open('seeds').read().splitlines()
 QUEUE = Queue()
 STOP = False
 
-def worker():
-    while not STOP:
-        session = db.get_session()
-        username = QUEUE.get()
-        get(username, session)
-        QUEUE.task_done()
-
-
 def _fetch(username):
     headers = {
         'User-Agent': random.choice(USER_AGENTS)
@@ -69,17 +61,8 @@ def _get_score(text):
         return 0
 
 
-
-
 def _store(session, *args):
     db.add(session, *args)
-
-
-def _already_indexed(session, username):
-    first = db.exists(session, username)
-    if first:
-        return first.id
-    return None
 
 
 def _queue(username):
@@ -94,17 +77,25 @@ def get(username, session):
     score = _get_score(text)
     user_id = db.create_user(session, username, score)
     for index, friend in enumerate(friends):
-        record = _already_indexed(session, friend)
-        if not record:
-            record = db.create_user(session, friend)
+        friend_record = db.exists(session, friend)
+        if not friend_record:
+            friend_record = db.create_user(session, friend)
             _queue(friend)
-        _store(user_id, record, index + 1)
+        _store(user_id, friend_record.id, index + 1)
 
 
 def _add_seeds(session):
     users = db.find_queued_users(session)
     for user in users:
         QUEUE.put(user.username)
+
+
+def worker():
+    while not STOP:
+        session = db.get_session()
+        username = QUEUE.get()
+        get(username, session)
+        QUEUE.task_done()
 
 
 if __name__ == "__main__":
