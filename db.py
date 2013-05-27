@@ -25,6 +25,10 @@ def add(user_id, friend_id, index):
     session.add(friend)
     session.commit()
 
+def find_queued_users():
+    session = Session()
+    return session.query(User).filter_by(score=-1).with_entities(User.username)
+
 def exists(username):
     session = Session()
     return session.query(User).filter_by(username=username).first()

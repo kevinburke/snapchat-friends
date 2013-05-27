@@ -34,6 +34,12 @@ def _fetch(username):
     return resp.text
 
 
+def _write_err(text):
+    with open('parse.err', 'w') as f:
+        f.write(text)
+        f.write("\n\n")
+
+
 def _get_friends(text):
     """ this is not the most robust function in the world """
     def _find_friends(child):
@@ -45,17 +51,22 @@ def _get_friends(text):
         friends_div = html.find('.//div[@id="panel3"]')
         return [_find_friends(child) for child in friends_div.iterchildren()]
     except:
-        with open('parse.err', 'w') as f:
-            f.write(text)
+        _write_err(text)
         return []
 
 
 def _get_score(text):
-    html = etree.HTML(text)
-    score_div = html.find('.//div[@id="score"]')
-    # format is HISCORE&nbsp;3428
-    parts = score_div.text.split(u'\xa0')
-    return int(parts[1])
+    try:
+        html = etree.HTML(text)
+        score_div = html.find('.//div[@id="score"]')
+        # format is HISCORE&nbsp;3428
+        parts = score_div.text.split(u'\xa0')
+        return int(parts[1])
+    except:
+        _write_err(text)
+        return 0
+
+
 
 
 def _store(user_id, friend_id, index):
@@ -87,12 +98,20 @@ def get(username):
             _queue(friend)
         _store(user_id, record, index + 1)
 
+
+def _add_seeds():
+    users = db.find_queued_users()
+    for user in users:
+        QUEUE.put(user.username)
+
+
 if __name__ == "__main__":
     count = 0
     while len(SEEDS):
         seed = SEEDS.pop()
         count += 1
         QUEUE.put(seed)
+    _add_seeds()
 
     for i in range(10):
         t = Thread(target=worker)
