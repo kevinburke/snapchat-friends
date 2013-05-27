@@ -16,7 +16,6 @@ USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 6.1; rv:11.0) Gecko/20100101 Firefox/11.0',
 ]
 SEEDS = open('seeds').read().splitlines()
-#SEEDS = []
 QUEUE = Queue()
 STOP = False
 
@@ -100,13 +99,15 @@ def worker():
 
 if __name__ == "__main__":
     count = 0
-    while len(SEEDS):
-        seed = SEEDS.pop()
-        count += 1
-        QUEUE.put(seed)
 
-    session = db.get_session()
-    _add_seeds(session)
+    if db.get_count() == 0:
+        while len(SEEDS):
+            seed = SEEDS.pop()
+            count += 1
+            QUEUE.put(seed)
+    else:
+        session = db.get_session()
+        _add_seeds(session)
 
     for i in range(10):
         t = Thread(target=worker)
