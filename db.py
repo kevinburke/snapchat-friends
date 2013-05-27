@@ -13,9 +13,13 @@ ENGINE = create_engine('sqlite:///{}/snapchat.db'.format(_get_filename_dir()))
 Session = sessionmaker(bind=ENGINE)
 
 def create_user(name, score=-1):
-    user = User(username=name, score=score)
     session = Session()
-    session.add(user)
+    user = exists(name)
+    if user:
+        user.score = score
+    else:
+        user = User(username=name, score=score)
+        session.add(user)
     session.commit()
     return user.id
 

@@ -16,6 +16,7 @@ USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 6.1; rv:11.0) Gecko/20100101 Firefox/11.0',
 ]
 SEEDS = open('seeds').read().splitlines()
+#SEEDS = []
 QUEUE = Queue()
 STOP = False
 
@@ -81,6 +82,8 @@ def _already_indexed(username):
 
 
 def _queue(username):
+    if username == "turtleshelley":
+        print username
     QUEUE.put(username)
 
 
@@ -111,6 +114,7 @@ if __name__ == "__main__":
         seed = SEEDS.pop()
         count += 1
         QUEUE.put(seed)
+
     _add_seeds()
 
     for i in range(10):
