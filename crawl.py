@@ -1,7 +1,7 @@
+from Queue import Queue, Full
 import random
-import time
-from Queue import Queue
 from threading import Thread
+import time
 
 from lxml import etree
 import requests
@@ -16,14 +16,17 @@ USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 6.1; rv:11.0) Gecko/20100101 Firefox/11.0',
 ]
 SEEDS = open('seeds').read().splitlines()
-QUEUE = Queue()
+QUEUE = Queue(300)
 STOP = False
+COUNT = 0
 
 def _fetch(username):
     headers = {
         'User-Agent': random.choice(USER_AGENTS)
     }
     resp = requests.get("{}/{}".format(BASE_URL, username), headers=headers)
+    if resp.status_code == 404:
+        return None
     return resp.text
 
 
@@ -55,8 +58,8 @@ def _get_score(text):
         # format is HISCORE&nbsp;3428
         parts = score_div.text.split(u'\xa0')
         return int(parts[1])
-    except:
-        _write_err(text)
+    except Exception as e:
+        _write_err(str(e) + "\n" + text)
         return 0
 
 
@@ -65,13 +68,18 @@ def _store(session, *args):
 
 
 def _queue(username):
-    QUEUE.put(username)
+    try:
+        QUEUE.put(username, timeout=0)
+    except Full:
+        return
 
 
 def get(username, session):
     """ Return a list of who this person follows"""
     print username
     text = _fetch(username)
+    if not text:
+        return
     friends = _get_friends(text)
     score = _get_score(text)
     user = db.create_user(session, username, score)
@@ -84,17 +92,24 @@ def get(username, session):
 
 
 def _add_seeds(session):
-    users = db.find_queued_users(session)
+    users = db.find_queued_users(session, 200)
     for user in users:
         QUEUE.put(user.username)
 
 
 def worker():
+    global COUNT
     while not STOP:
-        session = db.get_session()
-        username = QUEUE.get()
-        get(username, session)
-        QUEUE.task_done()
+        try:
+            session = db.get_session()
+            username = QUEUE.get()
+            get(username, session)
+            QUEUE.task_done()
+        finally:
+            COUNT += 1
+            with open('count', 'w') as f:
+                f.write(str(COUNT))
+            session.close()
 
 
 if __name__ == "__main__":
@@ -115,7 +130,13 @@ if __name__ == "__main__":
         t.start()
 
     try:
-        time.sleep(200)
+        while True:
+            if QUEUE.qsize() > 0:
+                time.sleep(20)
+            else:
+                session = db.get_session()
+                _add_seeds(session)
+
     except KeyboardInterrupt:
         print "interrupted"
         STOP = True

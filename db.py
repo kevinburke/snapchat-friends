@@ -9,7 +9,6 @@ def _get_filename_dir():
     return os.path.join(os.path.dirname(__file__))
 
 ENGINE = create_engine('sqlite:///{}/snapchat.db'.format(_get_filename_dir()))
-
 Session = sessionmaker(bind=ENGINE)
 
 def get_session(session=Session):
@@ -32,8 +31,9 @@ def add(session, user_id, friend_id, index):
     session.commit()
 
 
-def find_queued_users(session):
-    return session.query(User).filter_by(score=-1).with_entities(User.username)
+def find_queued_users(session, limit=200):
+    return session.query(User).filter_by(score=-1)\
+            .with_entities(User.username).limit(limit)
 
 
 def get_count(session=None):
