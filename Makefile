@@ -9,3 +9,9 @@ crawl: venv
 
 test:
 	. venv/bin/activate; nosetests
+
+db:
+	. venv/bin/activate; python create_db.py
+
+clean:
+	rm -rf snapchat.db

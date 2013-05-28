@@ -74,13 +74,13 @@ def get(username, session):
     text = _fetch(username)
     friends = _get_friends(text)
     score = _get_score(text)
-    user_id = db.create_user(session, username, score)
+    user = db.create_user(session, username, score)
     for index, friend in enumerate(friends):
         friend_record = db.exists(session, friend)
         if not friend_record:
             friend_record = db.create_user(session, friend)
             _queue(friend)
-        _store(user_id, friend_record.id, index + 1)
+        _store(session, user.id, friend_record.id, index + 1)
 
 
 def _add_seeds(session):
