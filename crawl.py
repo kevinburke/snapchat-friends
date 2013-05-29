@@ -80,6 +80,8 @@ def _queue(username):
 def get(username, session):
     """ Return a list of who this person follows"""
     print username
+    #print len(username)
+    #print [ord(letter) for letter in username]
     text = _fetch(username)
     if not text:
         return
