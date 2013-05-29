@@ -3,3 +3,4 @@ sqlalchemy
 grequests
 nose
 gevent
+psycopg2

@@ -40,12 +40,15 @@ def _get_friends(text):
     """ this is not the most robust function in the world """
     def _find_friends(child):
         link = child.find('.//a')
-        return link.text
+        if hasattr(link, 'text'):
+            return link.text.strip()
+        return None
 
     try:
         html = etree.HTML(text)
         friends_div = html.find('.//div[@id="panel3"]')
-        return [_find_friends(child) for child in friends_div.iterchildren()]
+        raw_friends = [_find_friends(child) for child in friends_div.iterchildren()]
+        return [friend for friend in raw_friends if friend]
     except:
         _write_err(text)
         return []
@@ -57,7 +60,7 @@ def _get_score(text):
         score_div = html.find('.//div[@id="score"]')
         # format is HISCORE&nbsp;3428
         parts = score_div.text.split(u'\xa0')
-        return int(parts[1])
+        return int(parts[1].strip())
     except Exception as e:
         _write_err(str(e) + "\n" + text)
         return 0
