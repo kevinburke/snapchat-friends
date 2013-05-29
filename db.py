@@ -1,3 +1,5 @@
+import ConfigParser, os
+
 import os
 
 from sqlalchemy import create_engine
@@ -8,7 +10,15 @@ from schema import Friend, User
 def _get_filename_dir():
     return os.path.join(os.path.dirname(__file__))
 
-ENGINE = create_engine('sqlite:///{}/snapchat.db'.format(_get_filename_dir()))
+
+config = ConfigParser.RawConfigParser()
+config.read('app.cfg')
+ENGINE = create_engine('postgresql://{user}:{password}'
+                       '@localhost:{port}/snapchat'.format(
+                           user=config.get('default', 'username'),
+                           password=config.get('default', 'password'),
+                           port=config.get('default', 'port'),
+                       ))
 Session = sessionmaker(bind=ENGINE)
 
 def get_session(session=Session):

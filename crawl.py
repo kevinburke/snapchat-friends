@@ -98,18 +98,12 @@ def _add_seeds(session):
 
 
 def worker():
-    global COUNT
+    session = db.get_session()
     while not STOP:
-        try:
-            session = db.get_session()
-            username = QUEUE.get()
-            get(username, session)
-            QUEUE.task_done()
-        finally:
-            COUNT += 1
-            with open('count', 'w') as f:
-                f.write(str(COUNT))
-            session.close()
+        username = QUEUE.get()
+        get(username, session)
+        QUEUE.task_done()
+    session.close()
 
 
 if __name__ == "__main__":
