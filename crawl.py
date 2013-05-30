@@ -1,3 +1,4 @@
+import logging
 from Queue import Queue, Full
 import random
 from threading import Thread
@@ -19,6 +20,7 @@ SEEDS = open('seeds').read().splitlines()
 QUEUE = Queue(300)
 STOP = False
 COUNT = 0
+logger = logging.getLogger('snapchat')
 
 def _fetch(username):
     headers = {
@@ -105,9 +107,13 @@ def _add_seeds(session):
 def worker():
     session = db.get_session()
     while not STOP:
-        username = QUEUE.get()
-        get(username, session)
-        QUEUE.task_done()
+        try:
+            username = QUEUE.get()
+            get(username, session)
+            QUEUE.task_done()
+        except Exception as e:
+            logger.error(str(e))
+            session.rollback()
     session.close()
 
 
