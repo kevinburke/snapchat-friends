@@ -20,7 +20,9 @@ SEEDS = open('seeds').read().splitlines()
 QUEUE = Queue(300)
 STOP = False
 COUNT = 0
+handler = logging.FileHandler('snapchat.log')
 logger = logging.getLogger('snapchat')
+logger.addHandler(handler)
 
 def _fetch(username):
     headers = {
