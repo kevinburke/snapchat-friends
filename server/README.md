@@ -20,16 +20,16 @@ Draw the graph for a user
 Sends back JSON like this:
 
 {
-    "links": [
-        {source: 123, target: 224},
-        {source: 123, target: 225},
+    "Links": [
+        {Source: 123, Target: 224},
+        {Source: 123, Target: 225},
         ...
     ],
-    "users": [
+    "Users": [
         {
-            name: "bobby",
-            id: 123,
-            score: 30444
+            Name: "bobby",
+            Id: 123,
+            Score: 30444
         },
         ...
     ]
