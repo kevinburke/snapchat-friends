@@ -4,3 +4,4 @@ app.cfg
 count
 parse.err
 snapchat.log
+server/bin

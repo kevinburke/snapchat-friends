@@ -18,7 +18,8 @@ func checkError(err error) {
 func homepage(ctx *web.Context) {
 	t := template.New("master")
 	tpl, err := t.ParseFiles("templates/index.html")
-	err = tpl.Execute(ctx)
+	err = tpl.Execute(ctx, nil)
+	checkError(err)
 }
 
 func main() {
