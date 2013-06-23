@@ -1,5 +1,8 @@
+test: build
+	gp test 
+
 build:
-	go install kevinburke/snapchat
+	gp build 
 
 serve: build
 	bin/snapchat

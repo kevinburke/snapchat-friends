@@ -4,4 +4,8 @@ app.cfg
 count
 parse.err
 snapchat.log
+
 server/bin
+server/server
+server/.gopack
+server/config.toml
