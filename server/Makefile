@@ -5,4 +5,4 @@ build:
 	gp build 
 
 serve: build
-	bin/snapchat
+	./server
