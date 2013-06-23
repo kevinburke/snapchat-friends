@@ -14,3 +14,4 @@ while True:
             with open('duplicates.csv', 'a') as f:
                 f.write('{},{}\n'.format(user.username, user.id))
     count += 1
+    print "{} users crawled".format(count * 1000)
