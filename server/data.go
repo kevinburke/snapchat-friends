@@ -32,6 +32,12 @@ func getUser(username string) (*User, error) {
 	}
 }
 
+func getFriendsById(id int) Users {
+	var users Users
+	db := getConnection()
+	rows, err := db.Query("SELECT * FROM friends WHERE username = $1", id)
+}
+
 type UserNotFoundError struct {
 	Message string
 }
