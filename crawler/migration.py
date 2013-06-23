@@ -1,9 +1,12 @@
+import time
+
 import db
 from schema import User
 import sqlalchemy
 
 count = 0
 session = db.get_session()
+start = time.time()
 while True:
     users = session.query(User).order_by(User.id).limit(10).offset(count * 1000)
     for user in users:
@@ -14,4 +17,4 @@ while True:
             with open('duplicates.csv', 'a') as f:
                 f.write('{},{}\n'.format(user.username, user.id))
     count += 1
-    print "{} users crawled".format(count * 1000)
+    print "{} users crawled, {} seconds elapsed".format(count * 1000, int(time.time() - start))
