@@ -9,3 +9,5 @@ server/bin
 server/server
 server/.gopack
 server/config.toml
+
+crawler/duplicates.csv

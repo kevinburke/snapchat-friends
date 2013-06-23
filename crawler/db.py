@@ -1,27 +1,28 @@
 import ConfigParser
 import os
-import sys
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from schema import Friend, User
+from schema import Friend, User, IndexedUser
 
 def _get_filename_dir():
     return os.path.join(os.path.dirname(__file__))
 
 
-if 'darwin' in sys.platform.lower():
-    ENGINE = create_engine('sqlite:///{}/snapchat.db'.format(_get_filename_dir()))
-else:
-    config = ConfigParser.RawConfigParser()
-    config.read('app.cfg')
-    ENGINE = create_engine('postgresql://{user}:{password}'
-                           '@localhost:{port}/snapchat'.format(
-                               user=config.get('default', 'username'),
-                               password=config.get('default', 'password'),
-                               port=config.get('default', 'port'),
-                           ))
+#if 'darwin' in sys.platform.lower():
+    #ENGINE = create_engine('sqlite:///{}/snapchat.db'.format(_get_filename_dir()))
+#else:
+config = ConfigParser.RawConfigParser()
+config.read('app.cfg')
+ENGINE = create_engine('postgresql://{user}:{password}'
+                       '@{host}:{port}/snapchat'.format(
+                           user=config.get('default', 'username'),
+                           password=config.get('default', 'password'),
+                           port=config.get('default', 'port'),
+                           host=config.get('default', 'host'),
+                       ))
+print ENGINE
 Session = sessionmaker(bind=ENGINE)
 
 def get_session(session=Session):
@@ -37,6 +38,11 @@ def create_user(session, name, score=-1):
         session.add(user)
     session.commit()
     return user
+
+def add_indexed_user(session, user):
+    iuser = IndexedUser(username=user.username, score=user.score)
+    session.add(iuser)
+    session.commit()
 
 def add(session, user_id, friend_id, index):
     friend = Friend(user=user_id, friend=friend_id, index=index)
