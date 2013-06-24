@@ -4,7 +4,7 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from schema import Friend, User, IndexedUser
+from schema import Friend, User, IndexedUser, IndexedFriend
 
 def _get_filename_dir():
     return os.path.join(os.path.dirname(__file__))
@@ -41,6 +41,11 @@ def create_user(session, name, score=-1):
 
 def add_indexed_user(session, user):
     iuser = IndexedUser(username=user.username, score=user.score)
+    session.add(iuser)
+    session.commit()
+
+def add_indexed_friend(session, friend):
+    iuser = IndexedFriend(user=friend.user, index=friend.index, friend=friend.friend)
     session.add(iuser)
     session.commit()
 

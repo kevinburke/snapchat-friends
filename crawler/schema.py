@@ -4,9 +4,16 @@ from sqlalchemy import Column, Integer, String, ForeignKey
 Base = declarative_base()
 
 class Friend(Base):
+    __tablename__ = 'friends'
+    id = Column(Integer, primary_key=True)
+    user = Column(Integer, ForeignKey('users.id'), index=True, unique=True)
+    index = Column(Integer)
+    friend = Column(Integer, ForeignKey('users.id'))
+
+class IndexedFriend(Base):
     __tablename__ = 'indexed_friends'
     id = Column(Integer, primary_key=True)
-    user = Column(Integer, ForeignKey('indexed_users.id'), index=True, unique=True)
+    user = Column(Integer, ForeignKey('indexed_users.id'), index=True)
     index = Column(Integer)
     friend = Column(Integer, ForeignKey('indexed_users.id'))
 
