@@ -9,7 +9,7 @@ session = db.get_session()
 start = time.time()
 PAGE_SIZE = 1000
 while True:
-    friends = session.query(Friend).order_by(Friend.id).limit(10).offset(count * PAGE_SIZE)
+    friends = session.query(Friend).order_by(Friend.id).limit(PAGE_SIZE).offset(count * PAGE_SIZE)
     for friend in friends:
         try:
             db.add_indexed_friend(session, friend)
