@@ -5,7 +5,7 @@ import (
 	"github.com/hoisie/web"
 	"html/template"
 	"log"
-	"strconv"
+	//"strconv"
 )
 
 func checkError(err error) {
@@ -29,14 +29,21 @@ func api(ctx *web.Context, username string) string {
 		ctx.NotFound("User not found")
 		return ""
 	}
-	friends := getFriendsById(user.Id)
+	friends, err := getFriendsById(user.Id)
+	checkError(err)
+	var links Links
+	var users []User
+	users = append(users, *user)
 	for i := 0; i < len(friends.Friends); i++ {
 		friend := friends.Friends[i]
-		log.Print(strconv.Itoa(friend.UserId))
-		log.Print(strconv.Itoa(friend.Index))
-		log.Print(strconv.Itoa(friend.FriendId))
+		link := Link{friend.UserId, friend.FriendId, friend.Index}
+		links.Links = append(links.Links, link)
+		user, err := getUserById(friend.UserId)
+		checkError(err)
+		users = append(users, *user)
 	}
-	bytes, err := json.Marshal(user)
+	response := Response{links.Links, users}
+	bytes, err := json.Marshal(response)
 	checkError(err)
 	return string(bytes)
 }

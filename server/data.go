@@ -23,12 +23,18 @@ type Friends struct {
 }
 
 type Link struct {
-	Source int
-	Target int
+	Source int // The user
+	Target int // Their friend
+	Rank   int // The friend rank
 }
 
 type Links struct {
 	Links []Link
+}
+
+type Response struct {
+	Links []Link
+	Users []User
 }
 
 func getUser(username string) (*User, error) {
@@ -42,7 +48,18 @@ func getUser(username string) (*User, error) {
 	}
 }
 
-func getFriendsById(id int) Friends {
+func getUserById(id int) (*User, error) {
+	var u User
+	db := getConnection()
+	err := db.QueryRow("SELECT * FROM users WHERE id = $1", id).Scan(&u.Id, &u.Name, &u.Score)
+	if err != nil {
+		return &User{}, err
+	} else {
+		return &u, nil
+	}
+}
+
+func getFriendsById(id int) (Friends, error) {
 	var friends Friends
 	db := getConnection()
 	rows, err := db.Query("SELECT friend, index, \"user\" FROM friends WHERE \"user\" = $1", id)
@@ -50,10 +67,12 @@ func getFriendsById(id int) Friends {
 	for rows.Next() {
 		var f Friend
 		err = rows.Scan(&f.UserId, &f.Index, &f.FriendId)
-		checkError(err)
+		if err != nil {
+			return Friends{}, err
+		}
 		friends.Friends = append(friends.Friends, f)
 	}
-	return friends
+	return friends, nil
 }
 
 type UserNotFoundError struct {
