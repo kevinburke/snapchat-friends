@@ -16,18 +16,19 @@ def _get_filename_dir():
 config = ConfigParser.RawConfigParser()
 config.read('app.cfg')
 ENGINE = create_engine('postgresql://{user}:{password}'
-                       '@{host}:{port}/snapchat'.format(
+                       '@{host}:{port}/{database}'.format(
                            user=config.get('default', 'username'),
                            password=config.get('default', 'password'),
                            port=config.get('default', 'port'),
                            host=config.get('default', 'host'),
+                           database=config.get('default', 'database'),
+                       #), echo=True)
                        ))
 print ENGINE
 Session = sessionmaker(bind=ENGINE)
 
 def get_session(session=Session):
     return session()
-
 
 def create_user(session, name, score=-1):
     user = exists(session, name)
@@ -68,3 +69,11 @@ def get_count(session=None):
 
 def exists(session, username):
     return session.query(User).filter_by(username=username).first()
+
+
+def find_friends(session, user):
+    return session.query(Friend).filter_by(friend=user.id)
+
+
+def find_user_in_friends(session, user):
+    return session.query(Friend).filter_by(user=user.id)
