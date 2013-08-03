@@ -14,11 +14,12 @@ func getConnection() *sql.DB {
 	user := configTree.Get("user").(string)
 	password := configTree.Get("password").(string)
 	host := configTree.Get("host").(string)
+	database := configTree.Get("database").(string)
 	port := configTree.Get("port").(int64)
 
 	rawUrl := fmt.Sprintf(
-		"postgres://%s:%s@%s:%d/snapchat",
-		user, password, host, port,
+		"postgres://%s:%s@%s:%d/%s?sslmode=disable",
+		user, password, host, port, database,
 	)
 	url, err := pq.ParseURL(rawUrl)
 	checkError(err)
