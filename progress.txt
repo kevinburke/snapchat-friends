@@ -1,0 +1,8 @@
+# Database deduplication
+
+The database has a number of duplicate records. I am going to leave this problem
+alone for the moment as solving it is sapping my energy and enthusiasm for the
+project.
+
+# When a user is requested, let's trigger a search that searches for all users
+# and friends attached to a username and decide what to do then.
