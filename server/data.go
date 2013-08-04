@@ -23,9 +23,9 @@ type Friends struct {
 }
 
 type Link struct {
-	Source int // The user
-	Target int // Their friend
-	Rank   int // The friend rank
+	UserId   int // The user
+	FriendId int // Their friend
+	Rank     int // The friend rank
 }
 
 type Links struct {
@@ -33,8 +33,8 @@ type Links struct {
 }
 
 type Response struct {
-	Links []Link
-	Users []User
+	Links []Link `json:"links"`
+	Users []User `json:"users"`
 }
 
 func getUser(username string) (*User, error) {
